@@ -53,8 +53,7 @@ modules:
           - fr.handbrake.ghb
           - org.freecad.FreeCAD
 
-          # AI & 3D Printing
-          - ai.lmstudio.LMStudio
+          # 3D Printing
           - com.prusa3d.PrusaSlicer
 
   # Optional signing module (by default, the GitHub workflow handles this step)
