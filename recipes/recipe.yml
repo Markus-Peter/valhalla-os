@@ -7,8 +7,8 @@ image-version: latest
 modules:
   - type: rpm-ostree
     repos:
-      # Fixated to Fedora 41 to prevent 404 errors on newer base images
-      - https://copr.fedorainfracloud.org/coprs/tuxedo/tuxedo-drivers/repo/fedora-41/tuxedo-tuxedo-drivers-fedora-41.repo
+      # Official Tuxedo Computers repository for Fedora
+      - https://rpm.tuxedocomputers.com/fedora/tuxedo.repo
     install:
       # 1. GNOME File Manager & Dropbox
       - nautilus
