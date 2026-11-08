@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: valhallalinux
-description: Custom Valhallalinux image based on Aurora-dx with Tuxedo and Audio/Superwhisper dependencies
+description: Custom Valhallalinux image based on Aurora-dx
 base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
