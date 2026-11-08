@@ -6,9 +6,9 @@ image-version: latest
 
 modules:
   - type: rpm-ostree
-    repos:
-      # Tuxedo drivers repository
-      - https://copr.fedorainfracloud.org/coprs/tuxedo/tuxedo-drivers/repo/fedora-$version/tuxedo-tuxedo-drivers-fedora-$version.repo
+    coprs:
+      # Clean way to add Tuxedo drivers via Copr
+      - tuxedo/tuxedo-drivers
     install:
       # 1. GNOME File Manager & Dropbox
       - nautilus
