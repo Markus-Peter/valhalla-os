@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: valhallalinux
-description: Custom Valhallalinux image based on Aurora-dx
+description: Custom Valhallalinux image based on Aurora-dx with Tuxedo and Audio/Superwhisper dependencies
 base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
@@ -13,34 +13,35 @@ modules:
       # Enable RPM Fusion nonfree to provide packages like nautilus-dropbox
       nonfree: rpmfusion
     install:
-      # 1. GNOME File Manager & Dropbox
-      - nautilus
-      - nautilus-dropbox
-      
-      # 2. GNOME video & file preview (Spacebar quick look + thumbnails)
-      - ffmpegthumbnailer
-      - gstreamer1-libav
-      - sushi
+      packages:
+        # 1. GNOME File Manager & Dropbox
+        - nautilus
+        - nautilus-dropbox
+        
+        # 2. GNOME video & file preview (Spacebar quick look + thumbnails)
+        - ffmpegthumbnailer
+        - gstreamer1-libav
+        - sushi
 
-      # 3. Tuxedo Drivers & Control Center
-      - tuxedo-drivers
-      - tuxedo-control-center
+        # 3. Tuxedo Drivers & Control Center
+        - tuxedo-drivers
+        - tuxedo-control-center
 
-      # 4. Solaar (Logitech manager with udev rules)
-      - solaar
+        # 4. Solaar (Logitech manager with udev rules)
+        - solaar
 
-      # 5. Audio & Spracherkennungs-Abhängigkeiten (für Superwhisper & lokale Tools)
-      - alsa-lib
-      - pulseaudio-libs
-      - portaudio
-      - python3-pip
-      - gcc
-      - make
+        # 5. Audio & Spracherkennungs-Abhängigkeiten (für Superwhisper & lokale Tools)
+        - alsa-lib
+        - pulseaudio-libs
+        - portaudio
+        - python3-pip
+        - gcc
+        - make
 
-      # 6. Video Codecs & Multimedia (RPM Fusion basics)
-      - gstreamer1-plugins-good
-      - gstreamer1-plugins-bad-free
-      - gstreamer1-plugin-openh264
+        # 6. Video Codecs & Multimedia (RPM Fusion basics)
+        - gstreamer1-plugins-good
+        - gstreamer1-plugins-bad-free
+        - gstreamer1-plugin-openh264
 
   - type: default-flatpaks
     configurations:
