@@ -4,13 +4,11 @@ base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
-  - type: rpm-repos
+  - type: rpm-ostree
     repos:
       # Tuxedo drivers repository
       - https://copr.fedorainfracloud.org/coprs/tuxedo/tuxedo-drivers/repo/fedora-$version/tuxedo-tuxedo-drivers-fedora-$version.repo
-
-  - type: rpms
-    rpms:
+    install:
       # 1. GNOME File Manager & Dropbox
       - nautilus
       - nautilus-dropbox
