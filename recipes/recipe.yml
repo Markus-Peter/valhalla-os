@@ -10,16 +10,18 @@ modules:
       files:
         # Official Tuxedo Computers repository for Fedora
         - https://rpm.tuxedocomputers.com/fedora/tuxedo.repo
+      # Enable RPM Fusion nonfree to provide packages like nautilus-dropbox
+      nonfree: rpmfusion
     install:
       packages:
         # 1. GNOME File Manager & Dropbox
         - nautilus
         - nautilus-dropbox
         
-        # GNOME video & file preview (Spacebar quick look + thumbnails)
+        # GNOME video & file preview (Spacebar quick look + thumbnails - package name is 'sushi')
         - ffmpegthumbnailer
         - gstreamer1-libav
-        - gnome-sushi
+        - sushi
 
         # 3. Tuxedo Drivers & Control Center
         - tuxedo-drivers
