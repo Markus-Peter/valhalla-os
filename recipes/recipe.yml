@@ -1,51 +1,68 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-
-name: valhallalinux
-description: Immutable Linux distro based on Bluefin-DX, featuring COSMIC and Tuxedo Tools.
-
-base-image: ghcr.io/ublue-os/bluefin-dx
+name: Valhallalinux
+description: Custom Valhallalinux image based on Aurora-dx
+base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
-  - type: files
-    files:
-      - source: system
-        destination: /
-
-  - type: dnf
+  - type: rpm-repos
     repos:
-      copr:
-        - darrencocco/tuxedo-control-center
-        # Falls cosmic-desktop nicht in den Standard-Fedora-Repos gefunden wird:
-        # - ryanabx/cosmic
-    install:
-      packages:
-        # --- TUXEDO TOOLS ---
-        - tuxedo-control-center
-        - tuxedo-drivers
+      # Tuxedo drivers repository
+      - https://copr.fedorainfracloud.org/coprs/tuxedo/tuxedo-drivers/repo/fedora-$version/tuxedo-tuxedo-drivers-fedora-$version.repo
 
-        # --- COSMIC DESKTOP ---
-        - cosmic-desktop
+  - type: rpms
+    rpms:
+      # 1. GNOME File Manager & Dropbox
+      - nautilus
+      - nautilus-dropbox
+      
+      # GNOME video & file preview (Spacebar quick look + thumbnails)
+      - ffmpegthumbnailer
+      - gstreamer1-libav
+      - gnome-sushi
 
-        # --- TERMINAL & TOOLS ---
-        - foot
-        - micro
-        - fish
-        - git
-        - brightnessctl
+      # 3. Tuxedo Drivers & Control Center
+      - tuxedo-drivers
+      - tuxedo-control-center
 
-  - type: default-flatpaks
-    configurations:
-      - notify: true
-        scope: system
-        install:
-          - it.mijorus.gearlever
+      # 5. Solaar (Logitech manager with udev rules)
+      - solaar
 
-  - type: os-release
-    properties:
-      ID: valhallalinux
-      ID_LIKE: fedora
-      NAME: Valhalla Linux
-      PRETTY_NAME: Valhalla Linux (Bluefin-DX Based)
+      # 6. Video Codecs & Multimedia (RPM Fusion basics)
+      - gstreamer1-plugins-good
+      - gstreamer1-plugins-bad-free
+      - gstreamer1-plugin-openh264
 
+  - type: flatpaks
+    flatpaks:
+      # System & Permissions
+      - id: com.github.tchx84.Flatseal
+        repo: flathub
+      - id: it.mijorus.gearlever
+        repo: flathub
+
+      # Office & Internet
+      - id: net.mullvad.MullvadBrowser
+        repo: flathub
+      - id: org.onlyoffice.desktopeditors
+        repo: flathub
+      - id: com.rtosta.zapzap
+        repo: flathub
+
+      # Media, CAD & Video Conversion
+      - id: com.obsproject.Studio
+        repo: flathub
+      - id: org.videolan.VLC
+        repo: flathub
+      - id: fr.handbrake.ghb
+        repo: flathub
+      - id: org.freecad.FreeCAD
+        repo: flathub
+
+      # AI & 3D Printing
+      - id: ai.lmstudio.LMStudio
+        repo: flathub
+      - id: com.prusa3d.PrusaSlicer
+        repo: flathub
+
+  # Optional signing module (by default, the GitHub workflow handles this step)
   - type: signing
