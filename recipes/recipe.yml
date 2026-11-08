@@ -32,25 +32,26 @@ modules:
       - gstreamer1-plugin-openh264
 
   - type: default-flatpaks
-    flatpaks:
-      # System & Permissions
-      - com.github.tchx84.Flatseal
-      - it.mijorus.gearlever
+    configurations:
+      - install:
+          # System & Permissions
+          - com.github.tchx84.Flatseal
+          - it.mijorus.gearlever
 
-      # Office & Internet
-      - net.mullvad.MullvadBrowser
-      - org.onlyoffice.desktopeditors
-      - com.rtosta.zapzap
+          # Office & Internet
+          - net.mullvad.MullvadBrowser
+          - org.onlyoffice.desktopeditors
+          - com.rtosta.zapzap
 
-      # Media, CAD & Video Conversion
-      - com.obsproject.Studio
-      - org.videolan.VLC
-      - fr.handbrake.ghb
-      - org.freecad.FreeCAD
+          # Media, CAD & Video Conversion
+          - com.obsproject.Studio
+          - org.videolan.VLC
+          - fr.handbrake.ghb
+          - org.freecad.FreeCAD
 
-      # AI & 3D Printing
-      - ai.lmstudio.LMStudio
-      - com.prusa3d.PrusaSlicer
+          # AI & 3D Printing
+          - ai.lmstudio.LMStudio
+          - com.prusa3d.PrusaSlicer
 
   # Optional signing module (by default, the GitHub workflow handles this step)
   - type: signing
