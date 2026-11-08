@@ -5,31 +5,33 @@ base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
-  - type: rpm-ostree
+  - type: dnf
     repos:
-      # Official Tuxedo Computers repository for Fedora
-      - https://rpm.tuxedocomputers.com/fedora/tuxedo.repo
+      files:
+        # Official Tuxedo Computers repository for Fedora
+        - https://rpm.tuxedocomputers.com/fedora/tuxedo.repo
     install:
-      # 1. GNOME File Manager & Dropbox
-      - nautilus
-      - nautilus-dropbox
-      
-      # GNOME video & file preview (Spacebar quick look + thumbnails)
-      - ffmpegthumbnailer
-      - gstreamer1-libav
-      - gnome-sushi
+      packages:
+        # 1. GNOME File Manager & Dropbox
+        - nautilus
+        - nautilus-dropbox
+        
+        # GNOME video & file preview (Spacebar quick look + thumbnails)
+        - ffmpegthumbnailer
+        - gstreamer1-libav
+        - gnome-sushi
 
-      # 3. Tuxedo Drivers & Control Center
-      - tuxedo-drivers
-      - tuxedo-control-center
+        # 3. Tuxedo Drivers & Control Center
+        - tuxedo-drivers
+        - tuxedo-control-center
 
-      # 5. Solaar (Logitech manager with udev rules)
-      - solaar
+        # 5. Solaar (Logitech manager with udev rules)
+        - solaar
 
-      # 6. Video Codecs & Multimedia (RPM Fusion basics)
-      - gstreamer1-plugins-good
-      - gstreamer1-plugins-bad-free
-      - gstreamer1-plugin-openh264
+        # 6. Video Codecs & Multimedia (RPM Fusion basics)
+        - gstreamer1-plugins-good
+        - gstreamer1-plugins-bad-free
+        - gstreamer1-plugin-openh264
 
   - type: default-flatpaks
     configurations:
