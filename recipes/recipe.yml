@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: Valhallalinux
 description: Custom Valhallalinux image based on Aurora-dx
 base-image: ghcr.io/ublue-os/aurora-dx
@@ -30,37 +31,26 @@ modules:
       - gstreamer1-plugins-bad-free
       - gstreamer1-plugin-openh264
 
-  - type: flatpaks
+  - type: default-flatpaks
     flatpaks:
       # System & Permissions
-      - id: com.github.tchx84.Flatseal
-        repo: flathub
-      - id: it.mijorus.gearlever
-        repo: flathub
+      - com.github.tchx84.Flatseal
+      - it.mijorus.gearlever
 
       # Office & Internet
-      - id: net.mullvad.MullvadBrowser
-        repo: flathub
-      - id: org.onlyoffice.desktopeditors
-        repo: flathub
-      - id: com.rtosta.zapzap
-        repo: flathub
+      - net.mullvad.MullvadBrowser
+      - org.onlyoffice.desktopeditors
+      - com.rtosta.zapzap
 
       # Media, CAD & Video Conversion
-      - id: com.obsproject.Studio
-        repo: flathub
-      - id: org.videolan.VLC
-        repo: flathub
-      - id: fr.handbrake.ghb
-        repo: flathub
-      - id: org.freecad.FreeCAD
-        repo: flathub
+      - com.obsproject.Studio
+      - org.videolan.VLC
+      - fr.handbrake.ghb
+      - org.freecad.FreeCAD
 
       # AI & 3D Printing
-      - id: ai.lmstudio.LMStudio
-        repo: flathub
-      - id: com.prusa3d.PrusaSlicer
-        repo: flathub
+      - ai.lmstudio.LMStudio
+      - com.prusa3d.PrusaSlicer
 
   # Optional signing module (by default, the GitHub workflow handles this step)
   - type: signing
