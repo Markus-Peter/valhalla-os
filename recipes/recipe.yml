@@ -10,12 +10,10 @@ modules:
     src: tuxedo.repo
     dest: /etc/yum.repos.d/tuxedo.repo
 
-  # 2. Alle dnf-Pakete (inkl. Copr)
+  # 2. Alle dnf-Pakete (Kopr-Module werden separat geladen)
   - type: dnf
     repos:
       nonfree: rpmfusion
-      copr:
-        - brickman240/tuxedo-drivers-kmod
 
     install:
       skip-unavailable: true
@@ -29,9 +27,8 @@ modules:
         - ffmpegthumbnailer
         - sushi
 
-        # 3. Tuxedo Control Center + Kernel-Module (via Copr)
+        # 3. Tuxedo Control Center (Kernel-Module via script unten)
         - tuxedo-control-center
-        - kernel-modules-core-tuxedo-drivers
 
         # 4. Logitech
         - solaar
@@ -42,7 +39,6 @@ modules:
         - make
 
         # 6. Video Codecs & Multimedia (vollständig via RPM Fusion)
-        #    good/bad-free/libav/ffmpeg liefert aurora-dx bereits mit
         - gstreamer1-plugins-bad-freeworld
         - gstreamer1-plugins-ugly
         - gstreamer1-plugin-openh264
@@ -55,7 +51,33 @@ modules:
         - rpmfusion-free-release-tainted
         - libdvdcss
 
-  # 8. Flatpaks
+  # 8. Tuxedo kmod: RPM aus dem neuesten Copr-Build laden
+  - type: script
+    snippets:
+      - |
+        set -euo pipefail
+        COPR_URL="https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod"
+        # Finde die höchste verfügbare Fedora-Version, die Builds hat
+        LATEST_FEDORA=$(curl -fsSL "$COPR_URL/" | grep -oP 'href="fedora-\K[0-9]+' | sort -rn | head -1)
+        if [ -z "$LATEST_FEDORA" ]; then
+          echo "ERROR: Keine Builds im Copr gefunden"
+          exit 1
+        fi
+        echo "Nutze Copr-Build für Fedora $LATEST_FEDORA"
+        BUILD_URL="${COPR_URL}/fedora-${LATEST_FEDORA}-x86_64/"
+        RPM_URL=$(curl -fsSL "$BUILD_URL" | grep -oP 'href="\Kkernel-modules-core-tuxedo-drivers-[^"]+\.rpm' | tail -1)
+        if [ -z "$RPM_URL" ]; then
+          echo "ERROR: Kein kernel-modules-core-tuxedo-drivers RPM im Copr gefunden"
+          exit 1
+        fi
+        echo "Downloading: $RPM_URL"
+        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm "${BUILD_URL}${RPM_URL#/}"
+        # Layer das RPM über dnf (der richtige Weg auf F41+ bootc/dnf5)
+        dnf install -y --setopt=install_weak_deps=False /tmp/kernel-modules-tuxedo-drivers.rpm
+        rm -f /tmp/kernel-modules-tuxedo-drivers.rpm
+        echo "Tuxedo kmod installiert."
+
+  # 9. Flatpaks
   - type: default-flatpaks
     system:
       install:
@@ -70,5 +92,5 @@ modules:
         - org.freecad.FreeCAD
         - com.prusa3d.PrusaSlicer
 
-  # 9. Signierung
+  # 10. Signierung
   - type: signing
