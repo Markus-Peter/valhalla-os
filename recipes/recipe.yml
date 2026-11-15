@@ -21,7 +21,7 @@ modules:
         - gstreamer1-libav
         - sushi
 
-        # 3. Tuxedo Control Center (Kernel-Treiber via tuxedo-drivers-kmod, s.u.)
+        # 3. Tuxedo Control Center (Kernel-Treiber via kmod, s.u.)
         - tuxedo-control-center
 
         # 4. Logitech (Solaar + udev rules)
@@ -44,13 +44,17 @@ modules:
         - libdvdcss
         - ffmpeg
 
-  # Tuxedo-Kernelmodule als kmod-RPMs (akmods-Port), aus BrickMan240s Copr.
-  # laedt die kmod-RPMs fuer den exakt passenden Kernel und installiert sie.
-  - type: akmods
-    settings:
-      copr: brickman240/tuxedo-drivers-kmod
-      modules:
-        - tuxedo-drivers
+  # Tuxedo-Kernelmodule als kmod-RPMs aus BrickMan240s Copr (akmods-Port).
+  # Laedt das zum laufenden Kernel passende RPM herunter und installiert es.
+  - type: script
+    snippets:
+      - |
+        set -euo pipefail
+        KV=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}' kernel-core)
+        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm \
+          "https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod/fedora-${FEDORA_VERSION}-x86_64/0*-kernel-modules-tuxedo-drivers/kernel-modules-tuxedo-drivers-*.${KV}.rpm"
+        rpm-ostree install /tmp/kernel-modules-tuxedo-drivers.rpm
+        rm -f /tmp/kernel-modules-tuxedo-drivers.rpm
 
   - type: default-flatpaks
     configurations:
