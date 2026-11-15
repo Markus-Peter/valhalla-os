@@ -10,13 +10,12 @@ modules:
     src: tuxedo.repo
     dest: /etc/yum.repos.d/tuxedo.repo
 
-  # 2. Alle regulären dnf-Pakete (ohne kmod)
+  # 2. Alle Pakete (kmod wird zur Laufzeit installiert, s. README)
   - type: dnf
     repos:
       nonfree: rpmfusion
     install:
       skip-unavailable: true
-      install-weak-deps: false
       packages:
         - nautilus
         - nautilus-dropbox
@@ -39,64 +38,22 @@ modules:
         - rpmfusion-free-release-tainted
         - libdvdcss
 
-  # 4. Tuxedo kmod: RPM holen, in lokales Repo verpacken, dann installieren
+  # 4. Hinweis-Skript statt Installationsversuch
   - type: script
     snippets:
       - |
-        set -euo pipefail
-        
-        COPR_URL="https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod"
-        
-        # Finde den neuesten x86_64-Build (egal welche Fedora-Version)
-        echo "Suche verfügbare Builds..."
-        BUILD_DIR=$(curl -fsSL "$COPR_URL/" | grep -oP 'href="\Kfedora-[0-9]+-x86_64/' | sort -V | tail -1)
-        
-        if [ -z "$BUILD_DIR" ]; then
-          echo "WARNUNG: Keine Builds im Copr gefunden — überspringe kmod"
-          exit 0
-        fi
-        
-        FEDORA_VER=$(echo "$BUILD_DIR" | grep -oP 'fedora-\K[0-9]+')
-        echo "Nutze Copr-Build für Fedora $FEDORA_VER"
-        
-        FULL_URL="${COPR_URL}/${BUILD_DIR}"
-        echo "Build-URL: $FULL_URL"
-        
-        # List RPMs aus dem aktuellen Build-Verzeichnis
-        RPM_LIST=$(curl -fsSL "$FULL_URL" | grep -oP 'href="\Kkernel-modules-core-tuxedo-drivers-[^"]+\.rpm' | tail -1)
-        
-        if [ -z "$RPM_LIST" ]; then
-          echo "WARNUNG: Kein kernel-modules-core-tuxedo-drivers RPM gefunden — überspringe kmod"
-          exit 0
-        fi
-        
-        echo "Lade: $RPM_LIST"
-        mkdir -p /tmp/localrepo
-        curl -fsSL -o "/tmp/localrepo/${RPM_LIST}" "${FULL_URL}${RPM_LIST}"
-        
-        # Erzeuge ein lokales Repo
-        dnf install -y createrepo_c
-        createrepo_c /tmp/localrepo
-        
-        # Lege ein Repo-File an
-        cat > /etc/yum.repos.d/local-tuxedo.repo <<'EOF'
-        [local-tuxedo]
-        name=Local Tuxedo kmod
-        baseurl=file:///tmp/localrepo
-        enabled=1
-        gpgcheck=0
+        cat > /usr/share/ublue-os/firstboot/valhalla-tuxedo-note.txt <<'EOF'
+        Tuxedo-Kernel-Module werden NICHT ins Image gebaut.
+        Grund: kein passendes COPR-Build fuer Fedora 45 verfuegbar.
+
+        Nach dem Booten einmalig ausfuehren:
+
+          sudo rpm-ostree usroverlay --hotfix
+          sudo dnf install tuxedo-drivers
+          sudo systemctl enable --now tccd
+
+        Hinweis: nach jedem 'bootc switch' / grossen Update erneut ausfuehren.
         EOF
-        
-        # Jetzt kann dnf das Paket auflösen
-        dnf install -y --setopt=install_weak_deps=False \
-          --disablerepo='*' --enablerepo=local-tuxedo \
-          kernel-modules-core-tuxedo-drivers || {
-            echo "WARNUNG: kmod-Installation fehlgeschlagen — fahre ohne fort"
-            exit 0
-          }
-        
-        rm -rf /tmp/localrepo /etc/yum.repos.d/local-tuxedo.repo
-        echo "Tuxedo kmod installiert."
 
   # 5. Flatpaks
   - type: default-flatpaks
