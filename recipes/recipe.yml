@@ -5,17 +5,21 @@ base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
-  # Kopiert tuxedo.repo direkt nach /etc/yum.repos.d/tuxedo.repo
+  # 1. tuxedo.repo lokal kopieren
   - type: copy
     src: tuxedo.repo
     dest: /etc/yum.repos.d/tuxedo.repo
 
+  # 2. Alle dnf-Pakete (inkl. Copr)
   - type: dnf
     repos:
       nonfree: rpmfusion
+      copr:
+        - brickman240/tuxedo-drivers-kmod
+
     install:
-      # Ueberspringt Pakete, die kein Repo anbietet (z.B. libdvdcss ohne tainted-Repo)
       skip-unavailable: true
+      install-weak-deps: false
       packages:
         # 1. Dateimanager & Dropbox
         - nautilus
@@ -25,14 +29,14 @@ modules:
         - ffmpegthumbnailer
         - sushi
 
-        # 3. Tuxedo Control Center (Kernel-Treiber via kmod, s.u.)
+        # 3. Tuxedo Control Center + Kernel-Module (via Copr)
         - tuxedo-control-center
+        - kernel-modules-core-tuxedo-drivers
 
-        # 4. Logitech (Solaar + udev rules)
+        # 4. Logitech
         - solaar
 
-        # 5. Audio & Spracherkennung (Superwhisper & lokale Tools)
-        #    alsa-lib / pulseaudio-libs / portaudio sind bereits im Base-Image
+        # 5. Audio & Dev (alsa/pulse/portaudio kommen aus aurora-dx mit)
         - python3-pip
         - gcc
         - make
@@ -43,9 +47,7 @@ modules:
         - gstreamer1-plugins-ugly
         - gstreamer1-plugin-openh264
 
-  # DVD-Wiedergabe: libdvdcss liegt NUR im "tainted"-Repo, das erst durch
-  # das Release-Paket aktiviert wird. Zweiter dnf-Durchlauf, damit das
-  # Release-RPM vor dem Gesucht-Install da ist.
+  # 7. DVD-Wiedergabe: libdvdcss liegt im "tainted"-Repo
   - type: dnf
     install:
       skip-unavailable: true
@@ -53,26 +55,7 @@ modules:
         - rpmfusion-free-release-tainted
         - libdvdcss
 
-  - type: script
-    snippets:
-      - |
-        set -euo pipefail
-        KV=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}' kernel-core)
-        echo "Kernel: $KV"
-        COPR_URL="https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod/fedora-$(rpm -E %fedora)-x86_64/"
-        RPM_URL=$(curl -fsSL "$COPR_URL" | grep -oP 'href="\K[^"]*kernel-modules-tuxedo-drivers-[^"]+\.rpm' | tail -1)
-        if [ -z "$RPM_URL" ]; then
-          echo "ERROR: Kein kernel-modules-tuxedo-drivers RPM im Copr gefunden"
-          exit 1
-        fi
-        echo "Downloading: $RPM_URL"
-        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm "${COPR_URL}${RPM_URL#/}"
-        rpm-ostree usroverlay || true
-        rpm -Uvh --nodeps /tmp/kernel-modules-tuxedo-drivers.rpm || \
-          rpm-ostree install /tmp/kernel-modules-tuxedo-drivers.rpm
-        rm -f /tmp/kernel-modules-tuxedo-drivers.rpm
-        echo "Tuxedo kmod installiert."
-
+  # 8. Flatpaks
   - type: default-flatpaks
     system:
       install:
@@ -87,4 +70,5 @@ modules:
         - org.freecad.FreeCAD
         - com.prusa3d.PrusaSlicer
 
+  # 9. Signierung
   - type: signing
