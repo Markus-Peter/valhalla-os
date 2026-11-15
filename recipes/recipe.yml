@@ -8,7 +8,7 @@ modules:
   - type: dnf
     repos:
       files:
-        - files/tuxedo.repo   # <-- Datei ins Repo commiten (nicht als URL)
+        - files/tuxedo.repo   # Datei im Unterordner "files" des Repos commiten
       nonfree: rpmfusion
     install:
       packages:
@@ -16,12 +16,12 @@ modules:
         - nautilus
         - nautilus-dropbox
 
-        # 2. Video & File Preview (Spacebar Quick Look + Thumbnails)
+        # 2. Video & File Preview (Quick Look + Thumbnails)
         - ffmpegthumbnailer
         - gstreamer1-libav
         - sushi
 
-        # 3. Tuxedo Control Center (Treiber laufen ueber akmods-Modul, s.u.)
+        # 3. Tuxedo Control Center (Kernel-Treiber via tuxedo-drivers-kmod, s.u.)
         - tuxedo-control-center
 
         # 4. Logitech (Solaar + udev rules)
@@ -44,10 +44,11 @@ modules:
         - libdvdcss
         - ffmpeg
 
-  # Tuxedo-Kernelmodule als akmod (funktioniert auf Atomic; DKMS tut es nicht)
+  # Tuxedo-Kernelmodule als kmod-RPMs (akmods-Port), aus BrickMan240s Copr.
+  # laedt die kmod-RPMs fuer den exakt passenden Kernel und installiert sie.
   - type: akmods
     settings:
-      copr: @ublue-os/akmods
+      copr: brickman240/tuxedo-drivers-kmod
       modules:
         - tuxedo-drivers
 
