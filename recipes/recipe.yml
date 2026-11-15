@@ -5,28 +5,40 @@ base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
+  # Kopiert files/tuxedo.repo -> /usr/etc/yum.repos.d/tuxedo.repo
   - type: files
     files:
-      - src: tuxedo.repo
-        dest: /etc/yum.repos.d/tuxedo.repo
+      - usr: /usr
 
   - type: dnf
-    nonfree: rpmfusion
+    repos:
+      nonfree: rpmfusion
     install:
       packages:
+        # 1. Dateimanager & Dropbox
         - nautilus
         - nautilus-dropbox
+
+        # 2. Video & File Preview (Quick Look + Thumbnails)
         - ffmpegthumbnailer
         - gstreamer1-libav
         - sushi
+
+        # 3. Tuxedo Control Center (Kernel-Treiber via kmod, s.u.)
         - tuxedo-control-center
+
+        # 4. Logitech (Solaar + udev rules)
         - solaar
+
+        # 5. Audio & Spracherkennung (Superwhisper & lokale Tools)
         - alsa-lib
         - pulseaudio-libs
         - portaudio
         - python3-pip
         - gcc
         - make
+
+        # 6. Video Codecs & Multimedia (vollstaendig via RPM Fusion)
         - gstreamer1-plugins-good
         - gstreamer1-plugins-bad-free
         - gstreamer1-plugins-bad-freeworld
