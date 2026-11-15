@@ -14,6 +14,8 @@ modules:
     repos:
       nonfree: rpmfusion
     install:
+      # Ueberspringt Pakete, die kein Repo anbietet (z.B. libdvdcss ohne tainted-Repo)
+      skip-unavailable: true
       packages:
         # 1. Dateimanager & Dropbox
         - nautilus
@@ -21,7 +23,6 @@ modules:
 
         # 2. Video & File Preview (Quick Look + Thumbnails)
         - ffmpegthumbnailer
-        - gstreamer1-libav
         - sushi
 
         # 3. Tuxedo Control Center (Kernel-Treiber via kmod, s.u.)
@@ -31,21 +32,26 @@ modules:
         - solaar
 
         # 5. Audio & Spracherkennung (Superwhisper & lokale Tools)
-        - alsa-lib
-        - pulseaudio-libs
-        - portaudio
+        #    alsa-lib / pulseaudio-libs / portaudio sind bereits im Base-Image
         - python3-pip
         - gcc
         - make
 
-        # 6. Video Codecs & Multimedia (vollstaendig via RPM Fusion)
-        - gstreamer1-plugins-good
-        - gstreamer1-plugins-bad-free
+        # 6. Video Codecs & Multimedia (vollständig via RPM Fusion)
+        #    good/bad-free/libav/ffmpeg liefert aurora-dx bereits mit
         - gstreamer1-plugins-bad-freeworld
         - gstreamer1-plugins-ugly
         - gstreamer1-plugin-openh264
+
+  # DVD-Wiedergabe: libdvdcss liegt NUR im "tainted"-Repo, das erst durch
+  # das Release-Paket aktiviert wird. Zweiter dnf-Durchlauf, damit das
+  # Release-RPM vor dem Gesucht-Install da ist.
+  - type: dnf
+    install:
+      skip-unavailable: true
+      packages:
+        - rpmfusion-free-release-tainted
         - libdvdcss
-        - ffmpeg
 
   - type: script
     snippets:
@@ -60,23 +66,25 @@ modules:
           exit 1
         fi
         echo "Downloading: $RPM_URL"
-        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm "$COPR_URL/$RPM_URL"
-        rpm-ostree install /tmp/kernel-modules-tuxedo-drivers.rpm
+        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm "${COPR_URL}${RPM_URL#/}"
+        rpm-ostree usroverlay || true
+        rpm -Uvh --nodeps /tmp/kernel-modules-tuxedo-drivers.rpm || \
+          rpm-ostree install /tmp/kernel-modules-tuxedo-drivers.rpm
         rm -f /tmp/kernel-modules-tuxedo-drivers.rpm
         echo "Tuxedo kmod installiert."
 
   - type: default-flatpaks
-    configurations:
-      - install:
-          - com.github.tchx84.Flatseal
-          - it.mijorus.gearlever
-          - net.mullvad.MullvadBrowser
-          - org.onlyoffice.desktopeditors
-          - com.rtosta.zapzap
-          - com.obsproject.Studio
-          - org.videolan.VLC
-          - fr.handbrake.ghb
-          - org.freecad.FreeCAD
-          - com.prusa3d.PrusaSlicer
+    system:
+      install:
+        - com.github.tchx84.Flatseal
+        - it.mijorus.gearlever
+        - net.mullvad.MullvadBrowser
+        - org.onlyoffice.desktopeditors
+        - com.rtosta.zapzap
+        - com.obsproject.Studio
+        - org.videolan.VLC
+        - fr.handbrake.ghb
+        - org.freecad.FreeCAD
+        - com.prusa3d.PrusaSlicer
 
   - type: signing
