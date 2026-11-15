@@ -10,40 +10,28 @@ modules:
     src: tuxedo.repo
     dest: /etc/yum.repos.d/tuxedo.repo
 
-  # 2. Alle dnf-Pakete (Kopr-Module werden separat geladen)
+  # 2. Alle regulären dnf-Pakete (ohne kmod)
   - type: dnf
     repos:
       nonfree: rpmfusion
-
     install:
       skip-unavailable: true
       install-weak-deps: false
       packages:
-        # 1. Dateimanager & Dropbox
         - nautilus
         - nautilus-dropbox
-
-        # 2. Video & File Preview (Quick Look + Thumbnails)
         - ffmpegthumbnailer
         - sushi
-
-        # 3. Tuxedo Control Center (Kernel-Module via script unten)
         - tuxedo-control-center
-
-        # 4. Logitech
         - solaar
-
-        # 5. Audio & Dev (alsa/pulse/portaudio kommen aus aurora-dx mit)
         - python3-pip
         - gcc
         - make
-
-        # 6. Video Codecs & Multimedia (vollständig via RPM Fusion)
         - gstreamer1-plugins-bad-freeworld
         - gstreamer1-plugins-ugly
         - gstreamer1-plugin-openh264
 
-  # 7. DVD-Wiedergabe: libdvdcss liegt im "tainted"-Repo
+  # 3. DVD-Wiedergabe
   - type: dnf
     install:
       skip-unavailable: true
@@ -51,33 +39,66 @@ modules:
         - rpmfusion-free-release-tainted
         - libdvdcss
 
-  # 8. Tuxedo kmod: RPM aus dem neuesten Copr-Build laden
+  # 4. Tuxedo kmod: RPM holen, in lokales Repo verpacken, dann installieren
   - type: script
     snippets:
       - |
         set -euo pipefail
+        
         COPR_URL="https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod"
-        # Finde die höchste verfügbare Fedora-Version, die Builds hat
-        LATEST_FEDORA=$(curl -fsSL "$COPR_URL/" | grep -oP 'href="fedora-\K[0-9]+' | sort -rn | head -1)
-        if [ -z "$LATEST_FEDORA" ]; then
-          echo "ERROR: Keine Builds im Copr gefunden"
-          exit 1
+        
+        # Finde den neuesten x86_64-Build (egal welche Fedora-Version)
+        echo "Suche verfügbare Builds..."
+        BUILD_DIR=$(curl -fsSL "$COPR_URL/" | grep -oP 'href="\Kfedora-[0-9]+-x86_64/' | sort -V | tail -1)
+        
+        if [ -z "$BUILD_DIR" ]; then
+          echo "WARNUNG: Keine Builds im Copr gefunden — überspringe kmod"
+          exit 0
         fi
-        echo "Nutze Copr-Build für Fedora $LATEST_FEDORA"
-        BUILD_URL="${COPR_URL}/fedora-${LATEST_FEDORA}-x86_64/"
-        RPM_URL=$(curl -fsSL "$BUILD_URL" | grep -oP 'href="\Kkernel-modules-core-tuxedo-drivers-[^"]+\.rpm' | tail -1)
-        if [ -z "$RPM_URL" ]; then
-          echo "ERROR: Kein kernel-modules-core-tuxedo-drivers RPM im Copr gefunden"
-          exit 1
+        
+        FEDORA_VER=$(echo "$BUILD_DIR" | grep -oP 'fedora-\K[0-9]+')
+        echo "Nutze Copr-Build für Fedora $FEDORA_VER"
+        
+        FULL_URL="${COPR_URL}/${BUILD_DIR}"
+        echo "Build-URL: $FULL_URL"
+        
+        # List RPMs aus dem aktuellen Build-Verzeichnis
+        RPM_LIST=$(curl -fsSL "$FULL_URL" | grep -oP 'href="\Kkernel-modules-core-tuxedo-drivers-[^"]+\.rpm' | tail -1)
+        
+        if [ -z "$RPM_LIST" ]; then
+          echo "WARNUNG: Kein kernel-modules-core-tuxedo-drivers RPM gefunden — überspringe kmod"
+          exit 0
         fi
-        echo "Downloading: $RPM_URL"
-        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm "${BUILD_URL}${RPM_URL#/}"
-        # Layer das RPM über dnf (der richtige Weg auf F41+ bootc/dnf5)
-        dnf install -y --setopt=install_weak_deps=False /tmp/kernel-modules-tuxedo-drivers.rpm
-        rm -f /tmp/kernel-modules-tuxedo-drivers.rpm
+        
+        echo "Lade: $RPM_LIST"
+        mkdir -p /tmp/localrepo
+        curl -fsSL -o "/tmp/localrepo/${RPM_LIST}" "${FULL_URL}${RPM_LIST}"
+        
+        # Erzeuge ein lokales Repo
+        dnf install -y createrepo_c
+        createrepo_c /tmp/localrepo
+        
+        # Lege ein Repo-File an
+        cat > /etc/yum.repos.d/local-tuxedo.repo <<'EOF'
+        [local-tuxedo]
+        name=Local Tuxedo kmod
+        baseurl=file:///tmp/localrepo
+        enabled=1
+        gpgcheck=0
+        EOF
+        
+        # Jetzt kann dnf das Paket auflösen
+        dnf install -y --setopt=install_weak_deps=False \
+          --disablerepo='*' --enablerepo=local-tuxedo \
+          kernel-modules-core-tuxedo-drivers || {
+            echo "WARNUNG: kmod-Installation fehlgeschlagen — fahre ohne fort"
+            exit 0
+          }
+        
+        rm -rf /tmp/localrepo /etc/yum.repos.d/local-tuxedo.repo
         echo "Tuxedo kmod installiert."
 
-  # 9. Flatpaks
+  # 5. Flatpaks
   - type: default-flatpaks
     system:
       install:
@@ -92,5 +113,5 @@ modules:
         - org.freecad.FreeCAD
         - com.prusa3d.PrusaSlicer
 
-  # 10. Signierung
+  # 6. Signierung
   - type: signing
