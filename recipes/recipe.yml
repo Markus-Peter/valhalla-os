@@ -8,7 +8,7 @@ modules:
   - type: dnf
     repos:
       files:
-        - files/tuxedo.repo   # Datei im Unterordner "files" des Repos commiten
+        - files/tuxedo.repo
       nonfree: rpmfusion
     install:
       packages:
@@ -44,17 +44,28 @@ modules:
         - libdvdcss
         - ffmpeg
 
-  # Tuxedo-Kernelmodule als kmod-RPMs aus BrickMan240s Copr (akmods-Port).
-  # Laedt das zum laufenden Kernel passende RPM herunter und installiert es.
+  # Tuxedo-Kernelmodule: ueber ein Script, das das kmod-RPM aus BrickMan240s Copr
+  # herunterlaedt und per rpm-ostree installiert.
   - type: script
     snippets:
       - |
         set -euo pipefail
+        # Kernel-Version ermitteln
         KV=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}' kernel-core)
-        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm \
-          "https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod/fedora-${FEDORA_VERSION}-x86_64/0*-kernel-modules-tuxedo-drivers/kernel-modules-tuxedo-drivers-*.${KV}.rpm"
+        echo "Kernel: $KV"
+        # Copr-Repo URL zusammenbauen
+        COPR_URL="https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod/fedora-$(rpm -E %fedora)-x86_64/"
+        # Letztes passendes RPM finden
+        RPM_URL=$(curl -fsSL "$COPR_URL" | grep -oP 'href="\K[^"]*kernel-modules-tuxedo-drivers-[^"]+\.rpm' | tail -1)
+        if [ -z "$RPM_URL" ]; then
+          echo "ERROR: Kein kernel-modules-tuxedo-drivers RPM im Copr gefunden"
+          exit 1
+        fi
+        echo "Downloading: $RPM_URL"
+        curl -fsSL -o /tmp/kernel-modules-tuxedo-drivers.rpm "$COPR_URL/$RPM_URL"
         rpm-ostree install /tmp/kernel-modules-tuxedo-drivers.rpm
         rm -f /tmp/kernel-modules-tuxedo-drivers.rpm
+        echo "Tuxedo kmod installiert."
 
   - type: default-flatpaks
     configurations:
