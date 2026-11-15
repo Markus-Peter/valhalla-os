@@ -5,10 +5,10 @@ base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
-  # Kopiert files/tuxedo.repo -> /usr/etc/yum.repos.d/tuxedo.repo
-  - type: files
-    files:
-      - usr: /usr
+  # Kopiert tuxedo.repo direkt nach /etc/yum.repos.d/tuxedo.repo
+  - type: copy
+    src: tuxedo.repo
+    dest: /etc/yum.repos.d/tuxedo.repo
 
   - type: dnf
     repos:
