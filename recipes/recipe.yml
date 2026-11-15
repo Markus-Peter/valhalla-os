@@ -5,11 +5,13 @@ base-image: ghcr.io/ublue-os/aurora-dx
 image-version: latest
 
 modules:
+  - type: files
+    files:
+      - src: tuxedo.repo
+        dest: /etc/yum.repos.d/tuxedo.repo
+
   - type: dnf
-    repos:
-      files:
-        - files/tuxedo.repo
-      nonfree: rpmfusion
+    nonfree: rpmfusion
     install:
       packages:
         # 1. Dateimanager & Dropbox
@@ -44,18 +46,13 @@ modules:
         - libdvdcss
         - ffmpeg
 
-  # Tuxedo-Kernelmodule: ueber ein Script, das das kmod-RPM aus BrickMan240s Copr
-  # herunterlaedt und per rpm-ostree installiert.
   - type: script
     snippets:
       - |
         set -euo pipefail
-        # Kernel-Version ermitteln
         KV=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}' kernel-core)
         echo "Kernel: $KV"
-        # Copr-Repo URL zusammenbauen
         COPR_URL="https://download.copr.fedorainfracloud.org/results/brickman240/tuxedo-drivers-kmod/fedora-$(rpm -E %fedora)-x86_64/"
-        # Letztes passendes RPM finden
         RPM_URL=$(curl -fsSL "$COPR_URL" | grep -oP 'href="\K[^"]*kernel-modules-tuxedo-drivers-[^"]+\.rpm' | tail -1)
         if [ -z "$RPM_URL" ]; then
           echo "ERROR: Kein kernel-modules-tuxedo-drivers RPM im Copr gefunden"
@@ -70,22 +67,15 @@ modules:
   - type: default-flatpaks
     configurations:
       - install:
-          # System & Permissions
           - com.github.tchx84.Flatseal
           - it.mijorus.gearlever
-
-          # Office & Internet
           - net.mullvad.MullvadBrowser
           - org.onlyoffice.desktopeditors
           - com.rtosta.zapzap
-
-          # Media, CAD & Video Conversion
           - com.obsproject.Studio
           - org.videolan.VLC
           - fr.handbrake.ghb
           - org.freecad.FreeCAD
-
-          # 3D Printing
           - com.prusa3d.PrusaSlicer
 
   - type: signing
