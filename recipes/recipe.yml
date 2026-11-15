@@ -8,29 +8,26 @@ modules:
   - type: dnf
     repos:
       files:
-        # Official Tuxedo Computers repository for Fedora
-        - https://rpm.tuxedocomputers.com/fedora/tuxedo.repo
-      # Enable RPM Fusion nonfree to provide packages like nautilus-dropbox
+        - files/tuxedo.repo   # <-- Datei ins Repo commiten (nicht als URL)
       nonfree: rpmfusion
     install:
       packages:
-        # 1. GNOME File Manager & Dropbox
+        # 1. Dateimanager & Dropbox
         - nautilus
         - nautilus-dropbox
-        
-        # 2. GNOME video & file preview (Spacebar quick look + thumbnails)
+
+        # 2. Video & File Preview (Spacebar Quick Look + Thumbnails)
         - ffmpegthumbnailer
         - gstreamer1-libav
         - sushi
 
-        # 3. Tuxedo Drivers & Control Center
-        - tuxedo-drivers
+        # 3. Tuxedo Control Center (Treiber laufen ueber akmods-Modul, s.u.)
         - tuxedo-control-center
 
-        # 4. Solaar (Logitech manager with udev rules)
+        # 4. Logitech (Solaar + udev rules)
         - solaar
 
-        # 5. Audio & Spracherkennungs-Abhängigkeiten (für Superwhisper & lokale Tools)
+        # 5. Audio & Spracherkennung (Superwhisper & lokale Tools)
         - alsa-lib
         - pulseaudio-libs
         - portaudio
@@ -38,10 +35,21 @@ modules:
         - gcc
         - make
 
-        # 6. Video Codecs & Multimedia (RPM Fusion basics)
+        # 6. Video Codecs & Multimedia (vollstaendig via RPM Fusion)
         - gstreamer1-plugins-good
         - gstreamer1-plugins-bad-free
+        - gstreamer1-plugins-bad-freeworld
+        - gstreamer1-plugins-ugly
         - gstreamer1-plugin-openh264
+        - libdvdcss
+        - ffmpeg
+
+  # Tuxedo-Kernelmodule als akmod (funktioniert auf Atomic; DKMS tut es nicht)
+  - type: akmods
+    settings:
+      copr: @ublue-os/akmods
+      modules:
+        - tuxedo-drivers
 
   - type: default-flatpaks
     configurations:
@@ -64,5 +72,4 @@ modules:
           # 3D Printing
           - com.prusa3d.PrusaSlicer
 
-  # Optional signing module (by default, the GitHub workflow handles this step)
   - type: signing
